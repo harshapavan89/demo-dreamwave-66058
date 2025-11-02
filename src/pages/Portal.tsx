@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Circle, Youtube, Trash2, Flame, Upload, FileCheck, BookOpen, FileText, Loader2, XCircle, Clock } from "lucide-react";
 import { getSafeErrorMessage } from "@/lib/error-utils";
+import { Leaderboard } from "@/components/Leaderboard";
+import { QuizVerification } from "@/components/QuizVerification";
 
 interface Plan {
   id: string;
@@ -26,6 +28,8 @@ interface DailyTask {
   quiz_questions?: any;
   quiz_score?: number | null;
   verification_status?: string | null;
+  task_type?: string;
+  quiz_attempts?: number;
 }
 
 interface Resource {
@@ -43,6 +47,7 @@ const Portal = () => {
   const [streak, setStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
+  const [activeQuizTaskId, setActiveQuizTaskId] = useState<string | null>(null);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -172,6 +177,89 @@ const Portal = () => {
     }
   };
 
+  const handleQuizComplete = async (taskId: string, score: number, passed: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (passed) {
+        // Update task as completed
+        const { error } = await supabase
+          .from('daily_tasks')
+          .update({ 
+            completed: true,
+            completed_at: new Date().toISOString(),
+            quiz_score: score,
+            verification_status: 'approved'
+          })
+          .eq('id', taskId);
+
+        if (error) throw error;
+
+        // Update streak
+        const { data: streakData } = await supabase
+          .from("streaks")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        const today = new Date().toISOString().split('T')[0];
+        const lastCompleted = streakData?.last_completed_date;
+        
+        let newStreak = streakData?.current_streak || 0;
+        if (lastCompleted !== today) {
+          newStreak += 1;
+        }
+
+        await supabase
+          .from("streaks")
+          .update({
+            current_streak: newStreak,
+            longest_streak: Math.max(newStreak, streakData?.longest_streak || 0),
+            last_completed_date: today
+          })
+          .eq("user_id", user.id);
+
+        setStreak(newStreak);
+        await fetchData();
+        setActiveQuizTaskId(null);
+
+        toast({
+          title: "Quiz passed! 🎉",
+          description: `You scored ${score}%. Task completed!`,
+        });
+      } else {
+        // Increment attempts
+        const task = tasks.find(t => t.id === taskId);
+        const attempts = (task?.quiz_attempts || 0) + 1;
+
+        await supabase
+          .from('daily_tasks')
+          .update({ 
+            quiz_attempts: attempts,
+            quiz_score: score,
+            verification_status: 'rejected'
+          })
+          .eq('id', taskId);
+
+        await fetchData();
+        setActiveQuizTaskId(null);
+
+        toast({
+          title: "Quiz failed",
+          description: `You scored ${score}%. Try again!`,
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Quiz completion error:', error);
+      toast({
+        title: "Error",
+        description: getSafeErrorMessage(error),
+        variant: "destructive",
+      });
+    }
+  };
 
   const toggleTask = async (taskId: string, completed: boolean) => {
     try {
@@ -490,9 +578,25 @@ const Portal = () => {
                             </div>
                           )}
 
-                          {/* Verification Upload */}
+                           {/* Quiz or Proof Verification */}
                           <div className="pl-8 space-y-2">
-                            {task.verification_url ? (
+                            {task.task_type === 'quiz' && task.quiz_questions?.length > 0 ? (
+                              activeQuizTaskId === task.id ? (
+                                <QuizVerification
+                                  questions={task.quiz_questions}
+                                  onComplete={(score, passed) => handleQuizComplete(task.id, score, passed)}
+                                />
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  onClick={() => setActiveQuizTaskId(task.id)}
+                                  disabled={task.completed}
+                                  className="text-xs"
+                                >
+                                  {task.quiz_attempts ? `Take Quiz (Attempt ${(task.quiz_attempts || 0) + 1})` : 'Start Quiz 🧩'}
+                                </Button>
+                              )
+                            ) : task.verification_url ? (
                               <div className="flex items-center gap-3 flex-wrap">
                                 <div className="flex items-center gap-2 text-sm">
                                   <FileCheck className="h-4 w-4 text-primary" />
@@ -629,6 +733,9 @@ const Portal = () => {
               </Button>
             </Card>
           )}
+
+          {/* Global Leaderboard */}
+          <Leaderboard />
         </div>
       </div>
     </div>

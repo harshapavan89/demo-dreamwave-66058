@@ -1,1 +1,22 @@
 project_id = "chiratfvwybjdohlblul"
+
+[functions.chat]
+verify_jwt = false
+
+[functions.generate-habits]
+verify_jwt = false
+
+[functions.generate-quiz]
+verify_jwt = false
+
+[functions.send-reminder-email]
+verify_jwt = false
+
+[functions.send-scheduled-notifications]
+verify_jwt = false
+
+[functions.send-task-reminder]
+verify_jwt = false
+
+[functions.verify-task-proof]
+verify_jwt = false
