@@ -121,7 +121,7 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome to <span className="text-gradient">HabitForge</span></h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome to <span className="text-gradient">Dream2Habit</span></h1>
           <p className="text-muted-foreground">Start your journey to better habits</p>
         </div>
 
