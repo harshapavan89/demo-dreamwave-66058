@@ -83,6 +83,7 @@ export type Database = {
       global_leaderboard: {
         Row: {
           current_streak: number | null
+          email: string | null
           id: string
           last_updated: string | null
           longest_streak: number | null
@@ -91,6 +92,7 @@ export type Database = {
         }
         Insert: {
           current_streak?: number | null
+          email?: string | null
           id?: string
           last_updated?: string | null
           longest_streak?: number | null
@@ -99,6 +101,7 @@ export type Database = {
         }
         Update: {
           current_streak?: number | null
+          email?: string | null
           id?: string
           last_updated?: string | null
           longest_streak?: number | null

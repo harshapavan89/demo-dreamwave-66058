@@ -8,6 +8,7 @@ import { Trophy, Flame, Star, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import TargetProgressTracker from "@/components/TargetProgressTracker";
+import { LeaderboardWidget } from "@/components/LeaderboardWidget";
 
 interface Plan {
   id: string;
@@ -217,23 +218,31 @@ const Dashboard = () => {
             </Card>
           )}
 
-          {/* Badges */}
-          <Card className="p-8 bg-card border-border animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            <h2 className="text-2xl font-bold mb-6">🏆 Your Badges</h2>
-            <div className="grid md:grid-cols-3 gap-4">
-              {badges.map((badge, index) => (
-                <div
-                  key={index}
-                  className="p-6 rounded-xl bg-background border border-primary/30 hover:border-primary/60 transition-all hover:glow-primary text-center animate-slide-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="text-4xl mb-2">{badge.icon}</div>
-                  <h3 className="font-bold mb-1">{badge.name}</h3>
-                  <p className="text-sm text-muted-foreground">{badge.desc}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
+          {/* Badges and Leaderboard */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="p-8 bg-card border-border animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              <h2 className="text-2xl font-bold mb-6">🏆 Your Badges</h2>
+              <div className="grid gap-4">
+                {badges.map((badge, index) => (
+                  <div
+                    key={index}
+                    className="p-4 rounded-xl bg-background border border-primary/30 hover:border-primary/60 transition-all hover:glow-primary animate-slide-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-3xl">{badge.icon}</div>
+                      <div>
+                        <h3 className="font-bold">{badge.name}</h3>
+                        <p className="text-sm text-muted-foreground">{badge.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <LeaderboardWidget />
+          </div>
         </div>
       </div>
     </div>
