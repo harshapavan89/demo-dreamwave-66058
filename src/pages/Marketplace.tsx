@@ -85,13 +85,19 @@ const Marketplace = () => {
 
       if (habitsError) throw habitsError;
 
-      // Insert daily tasks
+      // Insert daily tasks - randomly assign 2 tasks as quiz type, rest as proof
       if (habitsData?.habits) {
-        const tasksToInsert = habitsData.habits.map((habit: string) => ({
+        // Shuffle indices and pick first 2 for quiz type
+        const indices = Array.from({ length: habitsData.habits.length }, (_, i) => i);
+        const shuffled = indices.sort(() => Math.random() - 0.5);
+        const quizIndices = new Set(shuffled.slice(0, 2));
+        
+        const tasksToInsert = habitsData.habits.map((habit: string, index: number) => ({
           plan_id: planData.id,
           user_id: user.id,
           title: habit,
-          completed: false
+          completed: false,
+          task_type: quizIndices.has(index) ? 'quiz' : 'proof'
         }));
 
         await supabase.from("daily_tasks").insert(tasksToInsert);
